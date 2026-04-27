@@ -1,0 +1,26 @@
+# Access-control configuration for the Google OAuth security plugin.
+#
+# Each [[users]] entry maps a Google account email to:
+#   - roles:            standard audience flags checked against the service's
+#                       Audience (Development, Manufacturing, AfterSales,
+#                       AfterMarket, Supplier)
+#   - additional_roles: custom audience names checked against the service's
+#                       Audience.enabled_audiences (matched by short_name)
+#
+# Set OAUTH_ROLES_CONFIG env var to override the path to this file.
+
+[[users]]
+email = "YOUR_USER@gmail.com"
+roles = ["AfterSales"]
+
+# Example: full admin access
+# [[users]]
+# email = "admin@gmail.com"
+# roles = ["Development", "Manufacturing", "AfterSales", "AfterMarket", "Supplier"]
+# additional_roles = ["FlashExpert", "DemoUser"]
+
+# Example: read-only technician
+# [[users]]
+# email = "tech@gamil.com"
+# roles = ["AfterSales"]
+# additional_roles = []

@@ -1,0 +1,53 @@
+@startuml Google OAuth 2.0 Desktop Flow
+
+actor User
+participant Browser
+participant Google
+participant "Client App" as Client
+participant "CDA Server" as CDA
+participant "ECU Simulator" as ECU
+
+== Phase 1: Authorization ==
+
+User -> Client : Request access
+Client -> Client : Generate auth URL with\nclient_id, scopes, redirect_uri
+Client -> User : Display auth URL
+User -> Browser : Open URL
+Browser -> Google : Authorization request
+Google -> User : Login & consent screen
+User -> Google : Approve access
+Google -> Browser : Authorization code
+User -> Client : Copy authorization code
+
+== Phase 2: Token Exchange ==
+
+Client -> CDA : POST /oauth/callback\n{code: "auth_code"}
+CDA -> Google : Exchange code for tokens\n(client_id, client_secret, code)
+Google -> CDA : ID token + access token
+CDA -> CDA : Validate ID token (JWKS)
+CDA -> Client : {access_token, expires_in}
+Client -> Client : Store access_token
+
+== Phase 3: Authenticated API Calls ==
+
+Client -> CDA : GET /components/flxc1000/data/...\nAuthorization: Bearer {token}
+CDA -> CDA : Validate JWT signature (Google JWKS)
+CDA -> CDA : Extract email from claims
+CDA -> CDA : Lookup roles in oauth_roles.toml
+CDA -> CDA : Check audience restrictions
+
+alt Access Granted
+    CDA -> ECU : UDS Request (22 F1 99)
+    ECU -> CDA : UDS Response (62 F1 99 ...)
+    CDA -> Client : JSON response with DID data
+else Access Denied
+    CDA -> Client : 403 Forbidden
+end
+
+== Runtime: Reload Roles ==
+
+Client -> CDA : POST /oauth/reload-roles
+CDA -> CDA : Re-read oauth_roles.toml
+CDA -> Client : {id: "reload-roles", data: {success: true}}
+
+@enduml

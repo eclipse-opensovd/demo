@@ -1,0 +1,23 @@
+@startuml OAuth Plugin Integration
+
+skinparam backgroundColor white
+skinparam defaultFontSize 18
+skinparam componentStyle rectangle
+
+title OAuth Plugin Integration
+
+actor "User" as user
+component "Google" as google
+component "CDA Server" as cda
+database "oauth_roles.toml" as roles
+component "ECU" as ecu
+
+user --> google : 1. Login
+google --> user : 2. Token
+user --> cda : 3. Request + Token
+cda --> roles : 4. Check Roles
+cda --> ecu : 5. UDS Command
+ecu --> cda : 6. Response
+cda --> user : 7. JSON Data
+
+@enduml

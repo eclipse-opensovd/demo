@@ -1,0 +1,216 @@
+#
+# OCX 2026 - Eclipse OpenSOVD Flux Capacitor ECU
+#
+
+schema: "opensovd.cda.diagdesc/v1"
+
+# -----------------------------------------------------------------------------
+# METADATA
+# -----------------------------------------------------------------------------
+meta:
+  author: "The Contributors to Eclipse OpenSOVD"
+  created: "2026-04-22"
+  revision: "1.0.0"
+  description: >
+    The Flux Capacitor ECU is a real-time
+    embedded system responsible for orchestrating the conditions required
+    for controlled temporal displacement. It interfaces between the
+    vehicle's power systems, navigation inputs, and the flux capacitor
+    core assembly.
+
+# -----------------------------------------------------------------------------
+# ECU DEFINITION
+# -----------------------------------------------------------------------------
+ecu:
+  id: "FLXC1000"
+  name: "FLXC1000"
+  protocols:
+    doip:
+      protocol_short_name: "UDSonDoIP"
+      is_default: true
+  default_addressing_mode: physical
+  addressing:
+    doip:
+      ip: "192.168.0.1" # Placeholder
+      port: 13400
+      logical_address: 0x1000
+      functional_address: 0xFFFF
+
+services:
+  # 0x22 - ReadDataByIdentifier
+  readDataByIdentifier:
+
+# These data identifiers (DIDs) are all sub services of the ReadDataByIdentifier service (0x22)
+dids:
+  # -----------------------------------------------------------------------------
+  # Time Travel related DIDs
+  # -----------------------------------------------------------------------------
+
+  # F198 - Temporal Technician Info
+  # Provides information about the technician who performed the last temporal displacement, 
+  # including their name. This is crucial for maintenance records and troubleshooting temporal anomalies.
+  0xF198:
+    name: "TemporalTechnicianInfo"
+    param_name: "TechnicianName"
+    description: >
+      Name of the technician who performed the last temporal displacement.
+      This information is crucial for maintenance records and troubleshooting temporal anomalies.
+    type: technician_name_type
+    access: public_read
+    readable: true
+    writable: false
+    audience:
+      afterSales: true
+      development: true
+
+  # F199 - Last Temporal Jump Date with Time and Timezone
+  # Provides precise timestamp of the last temporal jump including time and timezone.
+  # This information is essential for tracking the history of temporal displacements 
+  # and diagnosing any issues related to time travel
+  0xF199:
+    name: "LastTemporalJumpDateInfo"
+    param_name: "LastTemporalJumpDate"
+    description: >
+      Last temporal displacement with individually accessible fields
+      for year, month, day, hour, minute, second and timezone offset.
+      Negative years denote dates Before Common Era (BCE).
+      Timezone offset in minutes: negative for west of UTC, positive for east.
+    type: temporal_jump_datetime
+    access: public_read
+    readable: true
+    writable: false
+    audience:
+      afterSales: false
+      development: true
+
+  # TODO: Support writing temporal jump date, to enable time travel via SOVD.
+
+  # F100 - Identification (Variant Detection)
+  0xF100:
+    name: "Identification"
+    description: "ECU variant identification for variant detection"
+    type: uint24_identical
+    access: public_read
+    readable: true
+
+
+# -----------------------------------------------------------------------------
+# ACCESS PATTERNS
+# -----------------------------------------------------------------------------
+access_patterns:
+  # Means the ECU can be in any session or security level to read these DIDs, 
+  # a service might impose audience restrictions (e.g. only available for development, not aftersales)
+  public_read:
+    sessions: any
+    security: none
+    authentication: none
+
+types:
+  # --- Custom Types ---
+
+  # Technician Name type: variable-length ASCII string (END_OF_PDU)
+  technician_name_type:
+    dop_name: "TechnicianNameType"
+    base: ascii
+    min_length: 1
+    max_length: 255
+    termination: end_of_pdu
+    encoding: "ISO-8859-1"
+
+  # Structured datetime with timezone for temporal jump records
+  temporal_jump_datetime:
+    base: struct
+    min_length: 11
+    max_length: 11
+    termination: end_of_pdu
+    fields:
+      - name: year
+        type: { base: s32 }
+      - name: month
+        type: { base: u8 }
+      - name: day
+        type: { base: u8 }
+      - name: hour
+        type: { base: u8 }
+      - name: minute
+        type: { base: u8 }
+      - name: second
+        type: { base: u8 }
+      - name: timezone_offset_minutes
+        type: { base: s16, endian: big }
+
+  # Standard Datatypes, only define the ones we actually use
+  uint24_identical:
+    base: u32
+    bit_length: 24
+    endian: big
+
+# Rest of the file is boring, but necessary, boilerplate for defining COM parameters, sessions, and variant detection.
+comparams:
+  CP_DoIPLogicalGatewayAddress:
+    param_class: COM
+    usage: ECU_COMM
+    dop:
+      base_type: u32
+      min: 0
+      max: 65535
+    values:
+      UDS_Ethernet_DoIP: "4096"
+      UDS_Ethernet_DoIP_DOBT: "4096"
+
+  CP_UniqueRespIdTable:
+    cptype: complex
+    param_class: UNIQUE_ID
+    usage: ECU_COMM
+    children:
+      - name: CP_DoIPLogicalEcuAddress
+        param_class: UNIQUE_ID
+        dop: { base_type: u32, min: 0, max: 65535 }
+      - name: CP_DoIPSecondaryLogicalECUResponseAddress
+        param_class: UNIQUE_ID
+        dop: { base_type: u32, min: 0, max: 65535 }
+      - name: CP_ECULayerShortName
+        param_class: UNIQUE_ID
+        dop: { base_type: string }
+    values:
+      UDS_Ethernet_DoIP: ["4096", "0", "FLXC1000"]
+      UDS_Ethernet_DoIP_DOBT: ["4096", "0", "FLXC1000"]
+
+# -----------------------------------------------------------------------------
+# SESSIONS
+# -----------------------------------------------------------------------------
+sessions:
+  default:
+    id: 0x01
+    alias: "Default"
+
+# -----------------------------------------------------------------------------
+# VARIANT DEFINITIONS
+# -----------------------------------------------------------------------------
+variants:
+  detection_order: [App_0101]
+  fallback: App_0101
+
+  definitions:
+    App_0101:
+      description: "Application variant v01.01 for FLXC1000"
+      detect:
+        response_param_match:
+          service: "Identification_Read"
+          param_path: "Identification"
+          expected_value: 0x000101
+
+# -----------------------------------------------------------------------------
+# IDENTIFICATION
+# For variant detection matching parameters
+# -----------------------------------------------------------------------------
+identification:
+  expected_idents:
+    app_0101_check:
+      description: "Check if ECU is running App v01.01"
+      conditions:
+        - response_param_match:
+            service: "Identification_Read"
+            param_path: "Identification"
+            expected_value: 0x000101
+

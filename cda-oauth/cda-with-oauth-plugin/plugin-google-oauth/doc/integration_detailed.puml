@@ -1,0 +1,109 @@
+@startuml OAuth Plugin Integration - Detailed
+
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontSize 14
+
+title Google OAuth Security Plugin - Detailed Architecture
+
+package "External Services" {
+    database "oauth_roles.toml" as roles_file
+    cloud "Google OAuth" as google
+    component "JWKS Endpoint" as jwks
+    component "Token Endpoint" as token_ep
+}
+
+package "Environment Variables" {
+    component "GOOGLE_CLIENT_ID" as client_id
+    component "GOOGLE_CLIENT_SECRET" as client_secret
+}
+
+package "CDA Application" {
+    package "HTTP Layer" {
+        component "Axum Web Server" as axum
+        component "DynamicRouter" as router
+    }
+    
+    package "OAuth Routes" {
+        component "POST /oauth/callback" as callback
+        component "POST /oauth/reload-roles" as reload
+    }
+    
+    package "Vehicle API" {
+        component "GET /data/{did}" as did_route
+        component "POST /operations/{rid}" as routine_route
+    }
+    
+    package "Security Layer" {
+        component "GoogleOAuthSecurityPlugin" as plugin
+        component "Token Validator" as validator
+        component "Role Checker" as role_checker
+        component "AccessControlConfig" as acc
+    }
+    
+    package "Diagnostic Layer" {
+        component "DiagService Handler" as diag
+        component "UDS Manager" as uds
+    }
+}
+
+package "ECU Network" {
+    component "DoIP Gateway" as doip
+    component "ECU Simulator" as ecu
+}
+
+' Startup flow (blue)
+client_id -[#blue,dashed]-> plugin : startup
+client_secret -[#blue,dashed]-> plugin
+roles_file -[#blue,dashed]-> acc : load
+
+' Router connections
+axum --> router
+router --> callback
+router --> reload
+router --> did_route
+router --> routine_route
+
+' OAuth callback flow (green)
+callback -[#green]-> token_ep : exchange code
+token_ep -[#green]-> callback : ID token
+
+' Reload flow (orange)
+reload -[#orange]-> acc : reload
+
+' Request flow
+did_route --> plugin
+plugin --> validator
+validator --> jwks : fetch keys
+validator --> plugin
+plugin --> role_checker
+role_checker --> acc
+plugin --> diag
+diag --> uds
+uds --> doip
+doip --> ecu
+
+note right of plugin
+  SecurityPlugin trait:
+  - validate_token()
+  - check_audience()
+  - get_claims()
+end note
+
+note bottom of acc
+  oauth_roles.toml:
+  - email -> roles
+  - runtime reload
+end note
+
+legend right
+  |= Color |= Flow |
+  | Blue | Startup |
+  | Green | OAuth |
+  | Orange | Reload |
+  | Black | Request |
+endlegend
+
+@enduml

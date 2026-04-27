@@ -1,0 +1,3 @@
+[submodule "cda-oauth/diag-converter"]
+	path = cda-oauth/diag-converter
+	url = https://github.com/bburda42dot/diag-converter

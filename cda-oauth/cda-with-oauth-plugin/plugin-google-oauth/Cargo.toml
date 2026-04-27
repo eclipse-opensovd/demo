@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2025 The Contributors to Eclipse OpenSOVD (see CONTRIBUTORS)
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+
+[package]
+name = "plugin-google-oauth"
+version = "0.1.0"
+edition.workspace = true
+publish = false
+description = "Google OAuth Plugin Integration for CDA"
+homepage.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+# internal dependencies
+cda-database = { workspace = true }
+cda-interfaces = { workspace = true }
+cda-plugin-security = { workspace = true }
+cda-sovd = { workspace = true }
+sovd-interfaces = { workspace = true }
+
+aide = { workspace = true, features = ["axum"] }
+async-trait = { workspace = true }
+axum = { workspace = true, features = ["json"] }
+axum-extra = { workspace = true, features = ["typed-header"] }
+http = { workspace = true }
+jsonwebtoken = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+schemars = { workspace = true }
+thiserror = { workspace = true }
+
+tracing = { workspace = true }
+
+# Google OAuth dependencies
+reqwest = { workspace = true, features = ["json"] }
+rand = { workspace = true }
+hex = { workspace = true }
+toml = { workspace = true }
+urlencoding = { workspace = true }

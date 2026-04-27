@@ -1,0 +1,2 @@
+cd ../diag-converter/
+cargo run --release convert ../ecu-databases/ocx-ecu.yaml -o ../ecu-databases/ocx-ecu.mdd
