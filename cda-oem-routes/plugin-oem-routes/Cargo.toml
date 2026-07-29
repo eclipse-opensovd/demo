@@ -1,0 +1,28 @@
+[package]
+name = "plugin-oem-routes"
+version = "0.1.0"
+edition.workspace = true
+publish = false
+description = "OEM Routes Plugin for CDA Demo"
+homepage.workspace = true
+license.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+cda-sovd = { workspace = true }
+cda-interfaces = { workspace = true }
+cda-plugin-security = { workspace = true }
+cda-core = { workspace = true }
+cda-comm-uds = { workspace = true }
+cda-comm-doip = { workspace = true }
+cda-comm-can = { workspace = true }
+
+aide = { workspace = true, features = ["axum"] }
+axum = { workspace = true, features = ["json"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+schemars = { workspace = true }
+tracing = { workspace = true }
+hex = { workspace = true }
