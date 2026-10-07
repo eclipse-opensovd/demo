@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Contributors to the Eclipse Foundation
+# Assisted By: Codex (GPT-6 Sol High)
+
+[req]
+distinguished_name = dn
+prompt = no
+
+[dn]
+CN = Demo SPIRE CA
+
+[v3_ca]
+basicConstraints = critical,CA:TRUE
+keyUsage = critical,keyCertSign,cRLSign
+subjectKeyIdentifier = hash
+
+[agent]
+basicConstraints = critical,CA:FALSE
+keyUsage = critical,digitalSignature,keyEncipherment
+extendedKeyUsage = clientAuth
+subjectAltName = DNS:demo-agent

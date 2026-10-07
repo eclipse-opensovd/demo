@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Contributors to the Eclipse Foundation
+# Assisted By: Codex (GPT-6 Sol High)
+
+[package]
+name = "spiffe-demo-client"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+clap.workspace = true
+spiffe.workspace = true
+tokio.workspace = true
+reqwest = { version = "0.12.24", default-features = false, features = ["rustls-tls"] }

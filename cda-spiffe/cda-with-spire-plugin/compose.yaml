@@ -1,0 +1,108 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Contributors to the Eclipse Foundation
+# Assisted By: Codex (GPT-6 Sol High)
+
+services:
+  certgen:
+    profiles: [setup]
+    build:
+      context: .
+      dockerfile: spire/certgen.Dockerfile
+    volumes:
+      - ./spire/certs:/certs
+
+  spire-server:
+    image: ghcr.io/spiffe/spire-server:1.15.3
+    user: "0:0" # Local demo key files are mode 0600.
+    command: ["-config", "/etc/spire/server/server.conf"]
+    volumes:
+      - ./spire/server.conf:/etc/spire/server/server.conf:ro
+      - ./spire/certs/ca-cert.pem:/etc/spire/server/ca-cert.pem:ro
+      - ./spire/certs/ca-key.pem:/etc/spire/server/ca-key.pem:ro
+      - ./spire/certs/trusted-certs.pem:/etc/spire/server/trusted-certs.pem:ro
+      - spire-server-data:/var/lib/spire/server/.data
+    restart: on-failure
+
+  spire-agent:
+    image: ghcr.io/spiffe/spire-agent:1.15.3
+    pid: host
+    command: ["-config", "/etc/spire/agent/agent.conf"]
+    depends_on: [spire-server]
+    volumes:
+      - ./spire/agent.conf:/etc/spire/agent/agent.conf:ro
+      - ./spire/certs/agent-cert.pem:/etc/spire/agent/agent-cert.pem:ro
+      - ./spire/certs/agent-key.pem:/etc/spire/agent/agent-key.pem:ro
+      - ./spire/certs/trusted-certs.pem:/etc/spire/agent/trusted-certs.pem:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - spire-agent-socket:/run/spire/agent/public
+      - spire-agent-data:/var/lib/spire/agent/.data
+    restart: on-failure
+
+  ecu-sim:
+    image: ghcr.io/eclipse-sdv-blueprints/commercial-sdv-stack/ecu-sim:latest
+    build:
+      # Blueprint ECU simulator, built from the same commit the CDA plugin is copied from.
+      context: https://github.com/Eclipse-SDV-Hackathon-Chapter-Four/commercial-sdv-stack.git#5cb6ec194a6deb90d4ce743eae88016af3f9a649:ecu-sim
+      dockerfile: docker/Dockerfile
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8181/ || exit 1"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  cda:
+    image: cda-spiffe-demo:cda
+    build:
+      context: .
+      target: cda
+    ports:
+      - "127.0.0.1:${CDA_PORT:-20002}:20002"
+    environment:
+      OPA_REGO_POLICY_FILE: /app/config/authz.rego
+      OPA_DATA_FILE: /app/config/authorization-data.json
+      SPIFFE_ENDPOINT_SOCKET: unix:/run/spire/agent/public/api.sock
+      SPIFFE_DEMO_ROLE: cda
+      RUST_LOG: info,cda_spiffe_demo=debug
+    volumes:
+      - ./config:/app/config:ro
+      - ./odx:/app/odx:ro
+      - spire-agent-socket:/run/spire/agent/public:ro
+    depends_on:
+      spire-agent:
+        condition: service_started
+      ecu-sim:
+        condition: service_healthy
+    restart: on-failure
+
+  client-allowed:
+    profiles: [test]
+    image: cda-spiffe-demo:client
+    build:
+      context: .
+      target: client
+    environment:
+      SPIFFE_ENDPOINT_SOCKET: unix:/run/spire/agent/public/api.sock
+      SPIFFE_DEMO_ROLE: allowed
+    volumes:
+      - spire-agent-socket:/run/spire/agent/public:ro
+    depends_on: [spire-agent, cda]
+
+  client-denied:
+    profiles: [test]
+    image: cda-spiffe-demo:client
+    build:
+      context: .
+      target: client
+    environment:
+      SPIFFE_ENDPOINT_SOCKET: unix:/run/spire/agent/public/api.sock
+      SPIFFE_DEMO_ROLE: denied
+    volumes:
+      - spire-agent-socket:/run/spire/agent/public:ro
+    depends_on: [spire-agent, cda]
+
+volumes:
+  spire-server-data:
+  spire-agent-data:
+  spire-agent-socket:

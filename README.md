@@ -12,6 +12,12 @@ This demo was used for the "Diagnostics Reimagined" presentation at OCA 2026.
 
 **→ [View full documentation](cda-oauth/README.md)**
 
+### [CDA SPIFFE Demo](cda-spiffe/)
+
+A CDA security plugin validates SPIRE JWT-SVIDs and applies a diagnostic-service allowlist. The example includes a SPIRE server and agent, test clients, and a Docker Compose walkthrough.
+
+**→ [View the SPIFFE demo](cda-spiffe/cda-with-spire-plugin/README.md)**
+
 ---
 
 ## License

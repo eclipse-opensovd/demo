@@ -1,0 +1,38 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 Contributors to the Eclipse Foundation
+# Assisted By: Codex (GPT-6 Sol High)
+
+[workspace]
+resolver = "2"
+members = ["main", "client"]
+default-members = ["main", "client"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+
+[workspace.dependencies]
+cda-database = { git = "https://github.com/eclipse-opensovd/classic-diagnostic-adapter.git", rev = "99c60782a6e25f6cff9ba3a3418d0750f936016e" }
+cda-interfaces = { git = "https://github.com/eclipse-opensovd/classic-diagnostic-adapter.git", rev = "99c60782a6e25f6cff9ba3a3418d0750f936016e" }
+cda-plugin-security = { git = "https://github.com/eclipse-opensovd/classic-diagnostic-adapter.git", rev = "99c60782a6e25f6cff9ba3a3418d0750f936016e" }
+opensovd_cda_lib = { git = "https://github.com/eclipse-opensovd/classic-diagnostic-adapter.git", rev = "99c60782a6e25f6cff9ba3a3418d0750f936016e", package = "opensovd-cda" }
+# OpaConfig from the same commercial-sdv-stack commit the CDA sources were copied from.
+common = { git = "https://github.com/Eclipse-SDV-Hackathon-Chapter-Four/commercial-sdv-stack.git", rev = "5cb6ec194a6deb90d4ce743eae88016af3f9a649", default-features = false }
+async-trait = "0.1.92"
+axum = { version = "0.8.8", default-features = false }
+axum-extra = { version = "0.12.5" }
+clap = { version = "4.6.7", features = ["derive", "env"] }
+futures = "0.3.32"
+http = "1.3.1"
+regorus = "0.12.0"
+spiffe = { version = "0.16.1", default-features = false, features = ["workload-api-jwt"] }
+tokio = { version = "1.53.1", features = ["macros", "rt-multi-thread"] }
+tracing = "0.1.44"
+
+[patch.crates-io]
+aide = { git = "https://github.com/alexmohr/aide.git", rev = "56355cb" }
+doip-codec = { git = "https://github.com/theswiftfox/doip-codec.git", rev = "0dba319" }
+doip-definitions = { git = "https://github.com/theswiftfox/doip-definitions.git", rev = "bdeab8c" }
+flatbuffers = { git = "https://github.com/alexmohr/flatbuffers.git", rev = "0ba3307d" }

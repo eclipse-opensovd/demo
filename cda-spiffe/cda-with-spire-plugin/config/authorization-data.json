@@ -1,0 +1,8 @@
+{
+  "allowed_services": {
+    "spiffe://demo.example.org/demo/client-allowed": [
+      "Powertrain_Mode_Read",
+      "Powertrain_Mode_Write"
+    ]
+  }
+}
